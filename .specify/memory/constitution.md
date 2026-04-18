@@ -1,14 +1,14 @@
 <!--
 ## Sync Impact Report
-- **Version change**: 1.1.0 → 1.1.1
-- **Modified principles**: I. TypeScript-First — updated pin to TypeScript 6.0
-- **Added sections**: VII. Test-Driven Development (NON-NEGOTIABLE)
+- **Version change**: 1.1.1 → 1.2.0
+- **Modified principles**: None
+- **Added sections**: VIII. Web Component-First UI
 - **Removed sections**: None
 - **Templates requiring updates**:
-  - `.specify/templates/plan-template.md` ✅ — TDD gate should be added to Constitution Check; no structural change required
+  - `.specify/templates/plan-template.md` ✅ — New gate (Principle VIII) should appear in Constitution Check; no structural change required
   - `.specify/templates/spec-template.md` ✅ — Compatible; no structural changes required
-  - `.specify/templates/tasks-template.md` ✅ — TDD task pattern (write tests first) already supported by template format
-  - `.specify/templates/commands/` — Directory not present; skip
+  - `.specify/templates/tasks-template.md` ✅ — Compatible; component-per-file task pattern already natural in existing format
+  - `specs/001-sewing-fabric-organizer/plan.md` ⚠️ — Constitution Check table and project structure need Principle VIII gate + base component directory
 - **Deferred TODOs**: None
 -->
 
@@ -126,7 +126,39 @@ code generation safe. Writing tests first forces explicit thinking about
 contracts and edge cases before implementation details, reducing costly
 rework.
 
-## Technology Stack
+### VIII. Web Component-First UI
+
+All reusable or repeated UI elements in the frontend MUST be implemented as
+Custom Elements (Web Components v1) extending `HTMLElement`. The following
+rules apply:
+
+- **One component per file**: each Custom Element lives in its own TypeScript
+  file named in `kebab-case` matching its tag name (e.g., `fabric-card.ts`
+  registers `<fabric-card>`).
+- **Shared base class**: all Custom Elements MUST extend a project-level
+  `BaseComponent` class (located at `frontend/src/components/base/
+  base-component.ts`) that encapsulates boilerplate: shadow root creation,
+  `connectedCallback` lifecycle, and typed `CustomEvent` dispatch helpers.
+  No Custom Element MAY extend `HTMLElement` directly.
+- **Shadow DOM**: all Custom Elements MUST use an open shadow root
+  (`attachShadow({ mode: 'open' })`) to encapsulate styles. Global stylesheets
+  MUST NOT bleed into component styles; component-specific styles belong in
+  the component's shadow DOM.
+- **Typed attributes**: every observed attribute MUST have a corresponding
+  TypeScript getter/setter pair with an explicit type. Raw `getAttribute` calls
+  outside of the `attributeChangedCallback` are prohibited.
+- **Event-driven communication**: components communicate upward via typed
+  `CustomEvent`s dispatched on themselves. No global event bus, no direct
+  parent DOM manipulation, no shared mutable singletons between components.
+- **No duplication**: if the same UI pattern appears in two or more places it
+  MUST be extracted into a Custom Element. Inline HTML template strings MUST
+  NOT be duplicated across files.
+
+**Rationale**: Custom Elements v1 is a W3C standard supported in all modern
+browsers with no runtime overhead. Centralising UI in self-contained, typed,
+testable components makes the codebase navigable for both humans and AI coding
+agents. Shadow DOM encapsulation prevents CSS side-effects that are a leading
+cause of frontend regression bugs.
 
 **Language**: TypeScript 6.0 (pinned exact version; update via dedicated PR)
 **Transpilation target**: ES2022; adjust upward only when browser support data
@@ -134,8 +166,7 @@ justifies it and document the change in this file
 **Transpiler**: TypeScript compiler (`tsc`); a bundler (e.g., esbuild, Vite in
 library mode) is permitted for the browser bundle
 **Orchestration**: Aspire — AppHost authored in TypeScript
-**Frontend paradigm**: Vanilla HTML, CSS, and TypeScript/JavaScript; Web
-Components for reusable UI elements
+**Frontend paradigm**: Vanilla HTML, CSS, and TypeScript/JavaScript; all reusable UI as Custom Elements (Web Components v1) per Principle VIII
 **Observability**: OpenTelemetry via Aspire built-ins; `@opentelemetry/api` is
 permitted for manual span creation only
 **Package manager**: npm or pnpm — choose one per project and document in README
@@ -193,4 +224,4 @@ principle in this document, the constitution takes precedence.
 confirming no principles are violated. Use the plan.md Constitution Check gate
 as the checklist source.
 
-**Version**: 1.1.1 | **Ratified**: 2026-04-17 | **Last Amended**: 2026-04-17
+**Version**: 1.2.0 | **Ratified**: 2026-04-17 | **Last Amended**: 2026-04-17
